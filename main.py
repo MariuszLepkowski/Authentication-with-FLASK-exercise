@@ -31,6 +31,10 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
 
+class User(UserMixin):
+    def __init__(self, user_email):
+        self.email = user_email
+
 
 #create a user_loader callback
 @login_manager.user_loader
@@ -66,8 +70,19 @@ def register():
     return render_template("register.html")
 
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    email = request.form.get("email")
+    password = request.form.get("password")
+    user = User(name)
+    hashed_password = db.session.execute(db.select(User).where(User.email == email)).scalars()
+
+    if request.method == 'POST':
+        if check_password_hash(password=password, pwhash=hashed_password):
+            login_user(user)
+            return
+
+
     return render_template("login.html")
 
 
