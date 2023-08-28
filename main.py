@@ -10,6 +10,10 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 
+#configure Flask app to use Flask_Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+
 # CONNECT TO DB
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
 db = SQLAlchemy()
