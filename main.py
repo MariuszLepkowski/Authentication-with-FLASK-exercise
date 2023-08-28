@@ -32,6 +32,11 @@ with app.app_context():
     db.create_all()
 
 
+#create a user_loader callback
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get(user_id)
+
 @app.route('/')
 def home():
     return render_template("index.html")
