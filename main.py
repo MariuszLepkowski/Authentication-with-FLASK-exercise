@@ -23,7 +23,7 @@ db.init_app(app)
 
 
 # CREATE TABLE IN DB
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
@@ -42,6 +42,7 @@ class CustomUser(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 @app.route('/')
 def home():
@@ -90,17 +91,21 @@ def login():
 
 
 @app.route('/secrets')
+@login_required
 def secrets():
     user = current_user
     return render_template("secrets.html", user=user)
 
 
 @app.route('/logout')
+@login_required
 def logout():
-    pass
+    logout_user()
+    return redirect(url_for('home'))
 
 
 @app.route('/download')
+@login_required
 def download():
     return send_from_directory('static', path="files/cheat_sheet.pdf")
 
