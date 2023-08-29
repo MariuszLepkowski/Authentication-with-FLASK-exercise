@@ -31,9 +31,7 @@ class User(db.Model, UserMixin):
 with app.app_context():
     db.create_all()
 
-class CustomUser(UserMixin):
-    def __init__(self, user_id):
-        self.id = user_id
+
 
 
 #create a user_loader callback
@@ -79,7 +77,6 @@ def login():
 
     if request.method == 'POST' and user:
         if check_password_hash(password=password, pwhash=user.password):
-            user = CustomUser(user_id=user.id)
             login_user(user)
             return redirect(url_for("secrets"))
         else:
