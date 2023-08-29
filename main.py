@@ -32,12 +32,10 @@ with app.app_context():
     db.create_all()
 
 
-
-
-#create a user_loader callback
+# create a user_loader callback
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.get_or_404(User, user_id)
 
 
 @app.route('/')
@@ -75,7 +73,7 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
         user = User.query.filter_by(email=email).first()
-        
+
         if user:
             if check_password_hash(password=password, pwhash=user.password):
                 login_user(user)
