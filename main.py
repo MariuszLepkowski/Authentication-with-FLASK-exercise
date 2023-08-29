@@ -84,8 +84,7 @@ def login():
             return redirect(url_for("secrets"))
         else:
             return "Wrong password!"
-    else:
-        return "The user does not exist."
+
 
     return render_template("login.html")
 
