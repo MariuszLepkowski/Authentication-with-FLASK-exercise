@@ -71,16 +71,19 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    email = request.form.get("email")
-    password = request.form.get("password")
-    user = User.query.filter_by(email=email).first()
-
-    if request.method == 'POST' and user:
-        if check_password_hash(password=password, pwhash=user.password):
-            login_user(user)
-            return redirect(url_for("secrets"))
+    if request.method == 'POST':
+        email = request.form.get("email")
+        password = request.form.get("password")
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            if check_password_hash(password=password, pwhash=user.password):
+                login_user(user)
+                return redirect(url_for("secrets"))
+            else:
+                return "Wrong password!"
         else:
-            return "Wrong password!"
+            return "The user does not exist. Please register."
 
 
     return render_template("login.html")
