@@ -1,3 +1,5 @@
+from select import select
+
 from flask import Flask, render_template, request, url_for, redirect, flash, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
@@ -26,20 +28,20 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(1000))
- 
- 
+
+
 with app.app_context():
     db.create_all()
 
-class User(UserMixin):
-    def __init__(self, user_email):
-        self.email = user_email
+class CustomUser(UserMixin):
+    def __init__(self, user_id):
+        self.id = user_id
 
 
 #create a user_loader callback
 @login_manager.user_loader
 def load_user(user_id):
-    return User.get(user_id)
+    return User.query.get(int(user_id))
 
 @app.route('/')
 def home():
@@ -74,21 +76,23 @@ def register():
 def login():
     email = request.form.get("email")
     password = request.form.get("password")
-    user = User(name)
-    hashed_password = db.session.execute(db.select(User).where(User.email == email)).scalars()
+    user = User.query.filter_by(email=email).first()
 
-    if request.method == 'POST':
-        if check_password_hash(password=password, pwhash=hashed_password):
+    if request.method == 'POST' and user:
+        if check_password_hash(password=password, pwhash=user.password):
+            user = CustomUser(user_id=user.id)
             login_user(user)
-            return
-
+            return redirect(url_for("secrets"))
+        else:
+            return "Login failed!"
 
     return render_template("login.html")
 
 
 @app.route('/secrets')
 def secrets():
-    return render_template("secrets.html")
+    user = current_user
+    return render_template("secrets.html", user=user)
 
 
 @app.route('/logout')
