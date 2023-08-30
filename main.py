@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, url_for, redirect, flash, send_from_directory
+import sqlalchemy.exc
+from flask import Flask, render_template, request, url_for, redirect, flash, send_from_directory, get_flashed_messages
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
@@ -31,7 +32,6 @@ class User(db.Model, UserMixin):
 with app.app_context():
     db.create_all()
 
-
 # create a user_loader callback
 @login_manager.user_loader
 def load_user(user_id):
@@ -45,30 +45,40 @@ def home():
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
-    if request.method == "POST":
-        # Hashing and salting the password entered by the user
-        hash_and_salted_password = generate_password_hash(
-            request.form.get('password'),
-            method='pbkdf2:sha256',
-            salt_length=8
-        )
-        # Storing the hashed password in our database
-        new_user = User(
-            email=request.form.get('email'),
-            name=request.form.get('name'),
-            password=hash_and_salted_password,
-        )
+    try:
+        if request.method == "POST":
+            # Hashing and salting the password entered by the user
+            hash_and_salted_password = generate_password_hash(
+                request.form.get('password'),
+                method='pbkdf2:sha256',
+                salt_length=8
+            )
+            # Storing the hashed password in our database
+            new_user = User(
+                email=request.form.get('email'),
+                name=request.form.get('name'),
+                password=hash_and_salted_password,
+            )
 
-        db.session.add(new_user)
-        db.session.commit()
+            db.session.add(new_user)
+            db.session.commit()
 
-        return render_template("secrets.html", user=new_user)
+            return render_template("secrets.html", user=new_user)
+
+    except sqlalchemy.exc.IntegrityError:
+        return redirect(url_for('login', error="registration"))
 
     return render_template("register.html")
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
+    flashed_error = get_flashed_messages(category_filter=["error"])
+
+    if request.args.get('error') == 'registration':
+        error = "You've already signed up with that email. Log in instead."
+
     if request.method == 'POST':
         email = request.form.get("email")
         password = request.form.get("password")
@@ -79,12 +89,10 @@ def login():
                 login_user(user)
                 return redirect(url_for("secrets"))
             else:
-                return "Wrong password!"
+                error = "Wrong password!"
         else:
-            return "The user does not exist. Please register."
-
-
-    return render_template("login.html")
+            error = "The email does not exist. Please try again."
+    return render_template("login.html", error=error, flashed_error=flashed_error)
 
 
 @app.route('/secrets')
