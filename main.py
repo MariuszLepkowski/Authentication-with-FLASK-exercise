@@ -62,7 +62,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        return render_template("secrets.html", name=request.form.get('name'))
+        return render_template("secrets.html", user=new_user)
 
     return render_template("register.html")
 
